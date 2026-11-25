@@ -1,0 +1,38 @@
+# Nome fixo: volumes, containers e rede não dependem do nome da pasta.
+# Para rodar uma segunda cópia na mesma máquina, defina COMPOSE_PROJECT_NAME no .env dela.
+name: budgeting
+
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: budgeting
+      POSTGRES_USER: ${DB_USER_KEY:-budgeting}
+      POSTGRES_PASSWORD: ${DB_PASSWORD_KEY:?Defina DB_PASSWORD_KEY}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${SERVER_PORT_KEY:-8080}:8080"
+    environment:
+      SERVER_PORT_KEY: "8080"
+      DB_URL_KEY: jdbc:postgresql://db:5432/budgeting
+      DB_USER_KEY: ${DB_USER_KEY:-budgeting}
+      DB_PASSWORD_KEY: ${DB_PASSWORD_KEY:?Defina DB_PASSWORD_KEY}
+      JWT_KEY: ${JWT_KEY:?Defina JWT_KEY}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      AI_ENCRYPTION_PASSWORD: ${AI_ENCRYPTION_PASSWORD:?Defina AI_ENCRYPTION_PASSWORD}
+      AI_ENCRYPTION_SALT: ${AI_ENCRYPTION_SALT:?Defina AI_ENCRYPTION_SALT}
+
+volumes:
+  postgres_data:
