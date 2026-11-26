@@ -95,10 +95,10 @@ public interface UserControllerDoc {
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = AiConfigurationRequest.class),
                             examples = {
-                                    @ExampleObject(name = "OpenAI transcription", value = """
+                                    @ExampleObject(name = "OpenAI (tested with Postman)", value = """
                                             {
                                               "chatProvider": "OPENAI",
-                                              "chatModel": "gpt-4o-mini",
+                                              "chatModel": "gpt-4.1-mini",
                                               "chatApiKey": "your-chat-api-key",
                                               "transcriptionProvider": "OPENAI",
                                               "transcriptionModel": "whisper-1",
