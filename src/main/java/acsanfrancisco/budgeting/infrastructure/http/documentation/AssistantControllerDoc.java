@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
 @Tag(
@@ -96,7 +96,7 @@ public interface AssistantControllerDoc {
     ResponseEntity<String> processFromVoice(
             @Parameter(description = "Audio file to transcribe and process", required = true,
                     schema = @Schema(type = "string", format = "binary"))
-            @RequestParam("file") MultipartFile file,
+            @RequestPart("file") MultipartFile file,
             @Parameter(description = "UUID reused, with the same audio file, when retrying the same single-transaction request") java.util.UUID key,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails);
 }
