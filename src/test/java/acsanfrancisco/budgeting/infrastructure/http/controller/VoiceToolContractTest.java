@@ -142,13 +142,12 @@ class VoiceToolContractTest {
     @DisplayName("Should allow history query without period or page in schema and execution")
     void shouldAllowHistoryQueryWithoutPeriodOrPageInSchemaAndExecution() {
         when(transactions.findByCategoryAndPeriod(any(), eq(user.getId()), isNull(), isNull(), any()))
-                .thenReturn(new PageResult<>(List.of(), 0, 1, 137));
+                .thenReturn(new PageResult<>(List.of(), 0, 10, 137));
         String result = tool("list-transaction-by-category-and-period").call("{\"category\":\"GROCERIES\"}", context);
 
         assertThat(json.readTree(result).get("totalElements").asLong()).isEqualTo(137);
-        assertThat(json.readTree(result).get("content").size()).isZero();
         verify(transactions).findByCategoryAndPeriod(any(), eq(user.getId()), isNull(), isNull(),
-                eq(new acsanfrancisco.budgeting.domain.pagination.PageQuery(0, 1)));
+                eq(new acsanfrancisco.budgeting.domain.pagination.PageQuery(0, 10)));
         tool("list-transaction-by-category-and-period").call("{\"category\":\"GROCERIES\",\"page\":1,\"size\":100}", context);
         verify(transactions).findByCategoryAndPeriod(any(), eq(user.getId()), isNull(), isNull(),
                 eq(new acsanfrancisco.budgeting.domain.pagination.PageQuery(1, 100)));

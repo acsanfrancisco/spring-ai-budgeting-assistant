@@ -129,23 +129,24 @@ class TransactionToolsTest {
     // list-transaction-by-category-and-period
 
     @Test
-    @DisplayName("Should return only the count when page and size are omitted")
-    void shouldReturnOnlyCountWithoutPageAndSize() {
-        when(transactions.findByCategoryAndPeriod(category, userId, null, null, new PageQuery(0, 1)))
-                .thenReturn(new PageResult<>(List.of(transaction), 0, 1, 7));
+    @DisplayName("Should return the first ten transactions and the total when page and size are omitted")
+    void shouldReturnFirstPageWithoutPageAndSize() {
+        when(transactions.findByCategoryAndPeriod(category, userId, null, null, new PageQuery(0, 10)))
+                .thenReturn(new PageResult<>(List.of(transaction), 0, 10, 7));
 
         PageResult<TransactionOutput> output = tools.listTransactions(category, null, null, null, null, context);
 
-        assertThat(output.content()).isEmpty();
+        assertThat(output.content()).containsExactly(new TransactionOutput(transaction.getId().id(), "Weekly groceries",
+                new BigDecimal("75.50"), "GROCERIES", date, "EXPENSE"));
         assertThat(output.totalElements()).isEqualTo(7);
     }
 
     @Test
     @DisplayName("Should list the requested page with the default size")
     void shouldListRequestedPageWithDefaultSize() {
-        PageQuery pageQuery = new PageQuery(2, 20);
+        PageQuery pageQuery = new PageQuery(2, 10);
         when(transactions.findByCategoryAndPeriod(category, userId, period.atDay(1), period.atEndOfMonth(), pageQuery))
-                .thenReturn(new PageResult<>(List.of(transaction), 2, 20, 41));
+                .thenReturn(new PageResult<>(List.of(transaction), 2, 10, 41));
 
         PageResult<TransactionOutput> output = tools.listTransactions(category, period.atDay(1), period.atEndOfMonth(),
                 2, null, context);
@@ -153,7 +154,7 @@ class TransactionToolsTest {
         assertThat(output.content()).containsExactly(new TransactionOutput(transaction.getId().id(), "Weekly groceries",
                 new BigDecimal("75.50"), "GROCERIES", date, "EXPENSE"));
         assertThat(output.page()).isEqualTo(2);
-        assertThat(output.size()).isEqualTo(20);
+        assertThat(output.size()).isEqualTo(10);
         assertThat(output.totalElements()).isEqualTo(41);
     }
 
@@ -174,9 +175,9 @@ class TransactionToolsTest {
     @Test
     @DisplayName("Should filter by each date alone")
     void shouldFilterByEachDateAlone() {
-        PageQuery pageQuery = new PageQuery(0, 20);
+        PageQuery pageQuery = new PageQuery(0, 10);
         when(transactions.findByCategoryAndPeriod(any(), any(), any(), any(), any()))
-                .thenReturn(new PageResult<>(List.of(transaction), 0, 20, 1));
+                .thenReturn(new PageResult<>(List.of(transaction), 0, 10, 1));
 
         tools.listTransactions(category, period.atDay(1), null, 0, null, context);
         tools.listTransactions(category, null, period.atEndOfMonth(), 0, null, context);

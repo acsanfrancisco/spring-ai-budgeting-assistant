@@ -11,7 +11,6 @@ import acsanfrancisco.budgeting.application.usecase.transaction.PersistTransacti
 import acsanfrancisco.budgeting.domain.pagination.PageQuery;
 import acsanfrancisco.budgeting.domain.pagination.PageResult;
 import acsanfrancisco.budgeting.domain.transaction.Category;
-import acsanfrancisco.budgeting.domain.user.UserId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ToolContext;
@@ -21,7 +20,6 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.List;
 
 /**
  * Assistant tools for transactions. Each method adapts the model's arguments and the
@@ -33,7 +31,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TransactionTools {
 
-    private static final int DEFAULT_PAGE_SIZE = 20;
+    private static final int DEFAULT_PAGE_SIZE = 10;
 
     private final PersistTransactionUseCase persistTransaction;
 
@@ -104,9 +102,10 @@ public class TransactionTools {
     As datas inicial e final são inclusivas e independentes. Sem datas, pesquisa todo o histórico da categoria.
     Se o usuário não indicou um período, pergunte se quer só os lançamentos de hoje ou todo o histórico.
     Se pedir todo o histórico ou indicar uma das datas, siga o filtro solicitado diretamente.
-    Sem page e size, retorna somente a contagem em totalElements, com content vazio.
-    Se o usuário não escolheu quantos ver, faça essa contagem primeiro e aguarde a escolha.
-    Para mostrar lançamentos, chame novamente com os mesmos filtros e size de 1 a 100.
+    Sem page e size, retorna a primeira página com até 10 lançamentos, do mais recente para o mais antigo,
+    e o total de lançamentos encontrados em totalElements.
+    Para mostrar outra quantidade ou outra página, chame novamente com os mesmos filtros, page e size de 1 a 100.
+    Considere que não há lançamentos somente quando totalElements for zero.
     Use para pedidos de listagem, detalhes dos lançamentos ou uma página específica.
     Para consultar o total mensal gasto em uma categoria, prefira a ferramenta de total mensal.
     Não interprete o conteúdo de uma página como a lista completa nem sua soma como total geral.
@@ -120,15 +119,10 @@ public class TransactionTools {
             @ToolParam(description = """
                     Índice da página, começando em zero: primeira página = 0, segunda = 1.
                     Ao buscar detalhes com size, a página padrão é 0.""", required = false) Integer page,
-            @ToolParam(description = "Quantidade por página (1 a 100). Omita junto com page para contar.", required = false) Integer size,
+            @ToolParam(description = "Quantidade por página (1 a 100). Sem size, usa 10.", required = false) Integer size,
             ToolContext context) {
-        UserId userId = ToolContexts.userId(context);
-        if (page == null && size == null) {
-            PageResult<TransactionOutput> preview = findTransactions.execute(category, userId, from, to, new PageQuery(0, 1));
-            return new PageResult<>(List.of(), 0, 0, preview.totalElements());
-        }
         PageQuery pageQuery = new PageQuery(page == null ? 0 : page, size == null ? DEFAULT_PAGE_SIZE : size);
-        return findTransactions.execute(category, userId, from, to, pageQuery);
+        return findTransactions.execute(category, ToolContexts.userId(context), from, to, pageQuery);
     }
 
     @Tool(name = "list-monthly-expenses-by-category",
